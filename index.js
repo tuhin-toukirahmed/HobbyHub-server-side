@@ -25,8 +25,15 @@ app.post('/mygroups', async (req, res) => {
   }
 });
 
-app.get('/mygroups', (req, res) => {
-  res.status(200).json({ message: 'GET /mygroups is working!' });
+app.get('/mygroups', async (req, res) => {
+  try {
+    const mygroupsCollection = client.db("mygroups").collection("mygroups");
+    const groups = await mygroupsCollection.find().toArray();
+    res.status(200).json(groups);
+  } catch (err) {
+    console.error('Failed to fetch groups:', err);
+    res.status(500).json({ message: 'Failed to fetch groups', error: err.message });
+  }
 });
 
 app.listen(port, () => {
