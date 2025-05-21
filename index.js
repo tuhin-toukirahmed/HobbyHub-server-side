@@ -127,8 +127,26 @@ app.put('/users/:email', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+// Update a group by groupId (only if it belongs to the user with the given email)
+app.put('/mygroups/:groupId/:email', async (req, res) => {
+  try {
+    const groupId = req.params.groupId;
+    const email = req.params.email;
+    const updateData = req.body;
+    const mygroupsCollection = client.db("mygroups").collection("mygroups");
+    const filter = { _id: new ObjectId(groupId), email: email };
+    const update = { $set: updateData };
+    const options = { upsert: false };
+    const result = await mygroupsCollection.updateOne(filter, update, options);
+    if (result.matchedCount === 0) {
+      res.status(404).json({ message: 'Group not found or does not belong to this user' });
+    } else {
+      res.status(200).json({ message: 'Group updated successfully', result });
+    }
+  } catch (err) {
+    console.error('Failed to update group:', err);
+    res.status(500).json({ message: 'Failed to update group', error: err.message });
+  }
 });
 
 // Database connection
@@ -155,3 +173,7 @@ async function run() {
   }
 }
 run().catch(console.dir);
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
