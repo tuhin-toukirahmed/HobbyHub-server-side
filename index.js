@@ -36,6 +36,67 @@ app.get('/mygroups', async (req, res) => {
   }
 });
 
+// User collection APIs
+app.post('/users', async (req, res) => {
+  try {
+    const newUser = req.body;
+    const usersCollection = client.db("mygroups").collection("users");
+    const result = await usersCollection.insertOne(newUser);
+    console.log('New user added:', result);
+    res.status(201).json({ message: 'User added successfully', result });
+  } catch (err) {
+    console.error('Failed to add user:', err);
+    res.status(500).json({ message: 'Failed to add user', error: err.message });
+  }
+});
+
+app.get('/users', async (req, res) => {
+  try {
+    const usersCollection = client.db("mygroups").collection("users");
+    const users = await usersCollection.find().toArray();
+    res.status(200).json(users);
+  } catch (err) {
+    console.error('Failed to fetch users:', err);
+    res.status(500).json({ message: 'Failed to fetch users', error: err.message });
+  }
+});
+
+app.get('/users/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const usersCollection = client.db("mygroups").collection("users");
+    const user = await usersCollection.findOne({ email });
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+    } else {
+      res.status(200).json(user);
+    }
+  } catch (err) {
+    console.error('Failed to fetch user:', err);
+    res.status(500).json({ message: 'Failed to fetch user', error: err.message });
+  }
+});
+
+app.put('/users/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const updateData = req.body;
+    const usersCollection = client.db("mygroups").collection("users");
+    const filter = { email: email };
+    const update = { $set: updateData };
+    const options = { upsert: false };
+    const result = await usersCollection.updateOne(filter, update, options);
+    if (result.matchedCount === 0) {
+      res.status(404).json({ message: 'User not found' });
+    } else {
+      res.status(200).json({ message: 'User updated successfully', result });
+    }
+  } catch (err) {
+    console.error('Failed to update user:', err);
+    res.status(500).json({ message: 'Failed to update user', error: err.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
