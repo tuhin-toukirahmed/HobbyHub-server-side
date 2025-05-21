@@ -127,7 +127,6 @@ app.put('/users/:email', async (req, res) => {
   }
 });
 
-// Update a group by groupId (only if it belongs to the user with the given email)
 app.put('/mygroups/:groupId/:email', async (req, res) => {
   try {
     const groupId = req.params.groupId;
@@ -146,6 +145,25 @@ app.put('/mygroups/:groupId/:email', async (req, res) => {
   } catch (err) {
     console.error('Failed to update group:', err);
     res.status(500).json({ message: 'Failed to update group', error: err.message });
+  }
+});
+
+// Delete a group by groupId (only if it belongs to the user with the given email)
+app.delete('/mygroups/:groupId/:email', async (req, res) => {
+  try {
+    const groupId = req.params.groupId;
+    const email = req.params.email;
+    const mygroupsCollection = client.db("mygroups").collection("mygroups");
+    const filter = { _id: new ObjectId(groupId), email: email };
+    const result = await mygroupsCollection.deleteOne(filter);
+    if (result.deletedCount === 0) {
+      res.status(404).json({ message: 'Group not found or does not belong to this user' });
+    } else {
+      res.status(200).json({ message: 'Group deleted successfully' });
+    }
+  } catch (err) {
+    console.error('Failed to delete group:', err);
+    res.status(500).json({ message: 'Failed to delete group', error: err.message });
   }
 });
 
