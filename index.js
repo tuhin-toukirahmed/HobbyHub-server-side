@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
 app.use(cors());
@@ -33,6 +33,36 @@ app.get('/mygroups', async (req, res) => {
   } catch (err) {
     console.error('Failed to fetch groups:', err);
     res.status(500).json({ message: 'Failed to fetch groups', error: err.message });
+  }
+});
+
+// Get all groups created by a specific user (by email)
+app.get('/mygroups/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const mygroupsCollection = client.db("mygroups").collection("mygroups");
+    const groups = await mygroupsCollection.find({ email }).toArray();
+    res.status(200).json(groups);
+  } catch (err) {
+    console.error('Failed to fetch groups by email:', err);
+    res.status(500).json({ message: 'Failed to fetch groups by email', error: err.message });
+  }
+});
+
+// Get group details by groupId
+app.get('/mygroups/details/:groupId', async (req, res) => {
+  try {
+    const groupId = req.params.groupId;
+    const mygroupsCollection = client.db("mygroups").collection("mygroups");
+    const group = await mygroupsCollection.findOne({ _id: new ObjectId(groupId) });
+    if (!group) {
+      res.status(404).json({ message: 'Group not found' });
+    } else {
+      res.status(200).json(group);
+    }
+  } catch (err) {
+    console.error('Failed to fetch group details:', err);
+    res.status(500).json({ message: 'Failed to fetch group details', error: err.message });
   }
 });
 
