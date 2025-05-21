@@ -12,7 +12,22 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
- 
+app.post('/mygroups', async (req, res) => {
+  try {
+    const newGroup = req.body;
+    const mygroupsCollection = client.db("mygroups").collection("mygroups");
+    const result = await mygroupsCollection.insertOne(newGroup);
+    console.log('New group added:', result);
+    res.status(201).json({ message: 'Group added successfully', result });
+  } catch (err) {
+    console.error('Failed to add group:', err);
+    res.status(500).json({ message: 'Failed to add group', error: err.message });
+  }
+});
+
+app.get('/mygroups', (req, res) => {
+  res.status(200).json({ message: 'GET /mygroups is working!' });
+});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
@@ -21,6 +36,7 @@ app.listen(port, () => {
 // Database connection
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.h1ieoou.mongodb.net/?retryWrites=true&w=majority`;
+console.log(uri);
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -34,10 +50,10 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-     await client.db("admin").command({ ping: 1 });
+    await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } catch (err) {
     console.error("Failed to connect to MongoDB:", err);
   }
- }
+}
 run().catch(console.dir);
