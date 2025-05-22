@@ -167,6 +167,51 @@ app.delete('/mygroups/:groupId/:email', async (req, res) => {
   }
 });
 
+// Joined Groups collection APIs
+app.post('/joined-groups', async (req, res) => {
+  try {
+    const newJoinedGroup = req.body;
+    const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
+    const result = await joinedGroupsCollection.insertOne(newJoinedGroup);
+    console.log('New joined group added:', result);
+    res.status(201).json({ message: 'Joined group added successfully', result });
+  } catch (err) {
+    console.error('Failed to add joined group:', err);
+    res.status(500).json({ message: 'Failed to add joined group', error: err.message });
+  }
+});
+
+app.get('/joined-groups/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
+    const groups = await joinedGroupsCollection.find({ email }).toArray();
+    res.status(200).json(groups);
+  } catch (err) {
+    console.error('Failed to fetch joined groups:', err);
+    res.status(500).json({ message: 'Failed to fetch joined groups', error: err.message });
+  }
+});
+
+// Delete a joined group by its ObjectId and user email
+app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
+  try {
+    const joinedGroupId = req.params.joinedGroupId;
+    const email = req.params.email;
+    const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
+    const filter = { _id: new ObjectId(joinedGroupId), email: email };
+    const result = await joinedGroupsCollection.deleteOne(filter);
+    if (result.deletedCount === 0) {
+      res.status(404).json({ message: 'Joined group not found or does not belong to this user' });
+    } else {
+      res.status(200).json({ message: 'Joined group deleted successfully' });
+    }
+  } catch (err) {
+    console.error('Failed to delete joined group:', err);
+    res.status(500).json({ message: 'Failed to delete joined group', error: err.message });
+  }
+});
+
 // Database connection
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.h1ieoou.mongodb.net/?retryWrites=true&w=majority`;
