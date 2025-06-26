@@ -17,10 +17,10 @@ app.post('/mygroups', async (req, res) => {
     const newGroup = req.body;
     const mygroupsCollection = client.db("mygroups").collection("mygroups");
     const result = await mygroupsCollection.insertOne(newGroup);
-    console.log('New group added:', result);
+    // console.log('New group added:', result);
     res.status(201).json({ message: 'Group added successfully', result });
   } catch (err) {
-    console.error('Failed to add group:', err);
+    // console.error('Failed to add group:', err);
     res.status(500).json({ message: 'Failed to add group', error: err.message });
   }
 });
@@ -31,7 +31,7 @@ app.get('/mygroups', async (req, res) => {
     const groups = await mygroupsCollection.find().toArray();
     res.status(200).json(groups);
   } catch (err) {
-    console.error('Failed to fetch groups:', err);
+    // console.error('Failed to fetch groups:', err);
     res.status(500).json({ message: 'Failed to fetch groups', error: err.message });
   }
 });
@@ -44,7 +44,7 @@ app.get('/mygroups/:email', async (req, res) => {
     const groups = await mygroupsCollection.find({ email }).toArray();
     res.status(200).json(groups);
   } catch (err) {
-    console.error('Failed to fetch groups by email:', err);
+    // console.error('Failed to fetch groups by email:', err);
     res.status(500).json({ message: 'Failed to fetch groups by email', error: err.message });
   }
 });
@@ -61,7 +61,7 @@ app.get('/mygroups/details/:groupId', async (req, res) => {
       res.status(200).json(group);
     }
   } catch (err) {
-    console.error('Failed to fetch group details:', err);
+    // console.error('Failed to fetch group details:', err);
     res.status(500).json({ message: 'Failed to fetch group details', error: err.message });
   }
 });
@@ -72,10 +72,10 @@ app.post('/users', async (req, res) => {
     const newUser = req.body;
     const usersCollection = client.db("mygroups").collection("users");
     const result = await usersCollection.insertOne(newUser);
-    console.log('New user added:', result);
+    // console.log('New user added:', result);
     res.status(201).json({ message: 'User added successfully', result });
   } catch (err) {
-    console.error('Failed to add user:', err);
+    // console.error('Failed to add user:', err);
     res.status(500).json({ message: 'Failed to add user', error: err.message });
   }
 });
@@ -86,7 +86,7 @@ app.get('/users', async (req, res) => {
     const users = await usersCollection.find().toArray();
     res.status(200).json(users);
   } catch (err) {
-    console.error('Failed to fetch users:', err);
+    // console.error('Failed to fetch users:', err);
     res.status(500).json({ message: 'Failed to fetch users', error: err.message });
   }
 });
@@ -102,7 +102,7 @@ app.get('/users/:email', async (req, res) => {
       res.status(200).json(user);
     }
   } catch (err) {
-    console.error('Failed to fetch user:', err);
+    // console.error('Failed to fetch user:', err);
     res.status(500).json({ message: 'Failed to fetch user', error: err.message });
   }
 });
@@ -122,7 +122,7 @@ app.put('/users/:email', async (req, res) => {
       res.status(200).json({ message: 'User updated successfully', result });
     }
   } catch (err) {
-    console.error('Failed to update user:', err);
+    // console.error('Failed to update user:', err);
     res.status(500).json({ message: 'Failed to update user', error: err.message });
   }
 });
@@ -143,7 +143,7 @@ app.put('/mygroups/:groupId/:email', async (req, res) => {
       res.status(200).json({ message: 'Group updated successfully', result });
     }
   } catch (err) {
-    console.error('Failed to update group:', err);
+    // console.error('Failed to update group:', err);
     res.status(500).json({ message: 'Failed to update group', error: err.message });
   }
 });
@@ -162,7 +162,7 @@ app.delete('/mygroups/:groupId/:email', async (req, res) => {
       res.status(200).json({ message: 'Group deleted successfully' });
     }
   } catch (err) {
-    console.error('Failed to delete group:', err);
+    // console.error('Failed to delete group:', err);
     res.status(500).json({ message: 'Failed to delete group', error: err.message });
   }
 });
@@ -173,10 +173,10 @@ app.post('/joined-groups', async (req, res) => {
     const newJoinedGroup = req.body;
     const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
     const result = await joinedGroupsCollection.insertOne(newJoinedGroup);
-    console.log('New joined group added:', result);
+    // console.log('New joined group added:', result);
     res.status(201).json({ message: 'Joined group added successfully', result });
   } catch (err) {
-    console.error('Failed to add joined group:', err);
+    // console.error('Failed to add joined group:', err);
     res.status(500).json({ message: 'Failed to add joined group', error: err.message });
   }
 });
@@ -188,7 +188,7 @@ app.get('/joined-groups/:email', async (req, res) => {
     const groups = await joinedGroupsCollection.find({ email }).toArray();
     res.status(200).json(groups);
   } catch (err) {
-    console.error('Failed to fetch joined groups:', err);
+    // console.error('Failed to fetch joined groups:', err);
     res.status(500).json({ message: 'Failed to fetch joined groups', error: err.message });
   }
 });
@@ -207,7 +207,7 @@ app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
       res.status(200).json({ message: 'Joined group deleted successfully' });
     }
   } catch (err) {
-    console.error('Failed to delete joined group:', err);
+    // console.error('Failed to delete joined group:', err);
     res.status(500).json({ message: 'Failed to delete joined group', error: err.message });
   }
 });
@@ -215,7 +215,7 @@ app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
 // Database connection
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.h1ieoou.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri);
+// console.log(uri);
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -229,14 +229,14 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } catch (err) {
-    console.error("Failed to connect to MongoDB:", err);
+    // console.error("Failed to connect to MongoDB:", err);
   }
 }
-run().catch(console.dir);
+// run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  // console.log(`Server is running on http://localhost:${port}`);
 });
