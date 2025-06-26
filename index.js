@@ -3,13 +3,14 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const fs = require('fs');
 require('dotenv').config();
 
 app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Hello World!');
+  res.send('Hello World! how are you?');
 });
 
 app.post('/mygroups', async (req, res) => {
@@ -17,8 +18,7 @@ app.post('/mygroups', async (req, res) => {
     const newGroup = req.body;
     const mygroupsCollection = client.db("mygroups").collection("mygroups");
     const result = await mygroupsCollection.insertOne(newGroup);
-    // console.log('New group added:', result);
-    res.status(201).json({ message: 'Group added successfully', result });
+     res.status(201).json({ message: 'Group added successfully', result });
   } catch (err) {
     // console.error('Failed to add group:', err);
     res.status(500).json({ message: 'Failed to add group', error: err.message });
@@ -44,13 +44,11 @@ app.get('/mygroups/:email', async (req, res) => {
     const groups = await mygroupsCollection.find({ email }).toArray();
     res.status(200).json(groups);
   } catch (err) {
-    // console.error('Failed to fetch groups by email:', err);
-    res.status(500).json({ message: 'Failed to fetch groups by email', error: err.message });
+     res.status(500).json({ message: 'Failed to fetch groups by email', error: err.message });
   }
 });
 
-// Get group details by groupId
-app.get('/mygroups/details/:groupId', async (req, res) => {
+ app.get('/mygroups/details/:groupId', async (req, res) => {
   try {
     const groupId = req.params.groupId;
     const mygroupsCollection = client.db("mygroups").collection("mygroups");
@@ -61,13 +59,11 @@ app.get('/mygroups/details/:groupId', async (req, res) => {
       res.status(200).json(group);
     }
   } catch (err) {
-    // console.error('Failed to fetch group details:', err);
-    res.status(500).json({ message: 'Failed to fetch group details', error: err.message });
+     res.status(500).json({ message: 'Failed to fetch group details', error: err.message });
   }
 });
 
-// User collection APIs
-app.post('/users', async (req, res) => {
+ app.post('/users', async (req, res) => {
   try {
     const newUser = req.body;
     const usersCollection = client.db("mygroups").collection("users");
@@ -212,11 +208,21 @@ app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
   }
 });
 
-// Database connection
+app.get('/allgroups', async (req, res) => {
+  try {
+    const allGroupsCollection = client.db("mygroups").collection("Allgroups");
+    const groups = await allGroupsCollection.find().toArray();
+    res.status(200).json(groups);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch all groups', error: err.message });
+  }
+});
 
+ 
+
+ 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.h1ieoou.mongodb.net/?retryWrites=true&w=majority`;
-// console.log(uri);
-
+ 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -229,14 +235,14 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // await client.db("admin").command({ ping: 1 });
-    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } catch (err) {
-    // console.error("Failed to connect to MongoDB:", err);
+    console.error("Failed to connect to MongoDB:", err);
   }
 }
-// run().catch(console.dir);
+run().catch(console.dir);
 
 app.listen(port, () => {
-  // console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Server is running on http://localhost:${port}`);
 });
