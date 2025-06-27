@@ -5,6 +5,7 @@ const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const fs = require('fs');
 require('dotenv').config();
+const { ObjectId } = require('mongodb');
 
 app.use(cors());
 app.use(express.json());
@@ -219,22 +220,23 @@ app.get('/joined-groups/details/:joinedGroupId/:email', async (req, res) => {
     const joinedGroupId = req.params.joinedGroupId;
     const email = req.params.email;
     const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
-     let filter = {
+
+    if (!ObjectId.isValid(joinedGroupId)) {
+      return res.status(400).json({ message: 'Invalid group ID format' });
+    }
+
+    const filter = {
       _id: new ObjectId(joinedGroupId),
       email: { $regex: new RegExp(`^${email}$`, 'i') }
     };
-    let result;
-    try {
-      result = await joinedGroupsCollection.deleteOne(filter);
-    } catch (e) {
-      filter._id = joinedGroupId;
-      result = await joinedGroupsCollection.deleteOne(filter);
-    }
+
+    const result = await joinedGroupsCollection.deleteOne(filter);
+
     if (result.deletedCount === 0) {
-      res.status(404).json({ message: 'Joined group not found or does not belong to this user' });
-    } else {
-      res.status(200).json({ message: 'Joined group deleted successfully' });
+      return res.status(404).json({ message: 'Joined group not found or does not belong to this user' });
     }
+
+    res.status(200).json({ message: 'Joined group deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete joined group', error: err.message });
   }
@@ -273,22 +275,23 @@ app.get('/allgroups', async (req, res) => {
   }
 });
 
-// Get allgroups details by groupId (string or ObjectId)
+// Get allgroups details by groupId (ObjectId only, with validation)
 app.get('/allgroups/details/:_id', async (req, res) => {
   try {
     const groupId = req.params._id;
-    let group;
+
+    if (!ObjectId.isValid(groupId)) {
+      return res.status(400).json({ message: 'Invalid group ID format' });
+    }
+
     const allGroupsCollection = client.db("mygroups").collection("Allgroups");
-    try {
-      group = await allGroupsCollection.findOne({ _id: new ObjectId(groupId) });
-    } catch (e) {
-      group = await allGroupsCollection.findOne({ _id: groupId });
-    }
+    const group = await allGroupsCollection.findOne({ _id: new ObjectId(groupId) });
+
     if (!group) {
-      res.status(404).json({ message: 'Group not found' });
-    } else {
-      res.status(200).json(group);
+      return res.status(404).json({ message: 'Group not found' });
     }
+
+    res.status(200).json(group);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch group details', error: err.message });
   }
