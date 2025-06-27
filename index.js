@@ -210,22 +210,31 @@ app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
 
 app.get('/allgroups', async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 16;
-    const skip = (page - 1) * limit;
+    const page = parseInt(req.query.page);
+    const limit = parseInt(req.query.limit);
     const category = req.query.category;
 
     const allGroupsCollection = client.db("mygroups").collection("Allgroups");
-    const filter = category ? { category } : {};
+    const filter = category
+      ? { hobbyCategory: { $regex: category, $options: 'i' } }
+      : {};
 
+    if (category && (!page || !limit)) {
+      // Return all groups for the category (no pagination)
+      const groups = await allGroupsCollection.find(filter).toArray();
+      return res.json({ groups, totalPages: 1, totalGroups: groups.length, currentPage: 1 });
+    }
+
+    // Paginated (default)
+    const skip = ((page || 1) - 1) * (limit || 16);
     const totalGroups = await allGroupsCollection.countDocuments(filter);
-    const groups = await allGroupsCollection.find(filter).skip(skip).limit(limit).toArray();
+    const groups = await allGroupsCollection.find(filter).skip(skip).limit(limit || 16).toArray();
 
     res.json({
       groups,
-      totalPages: Math.ceil(totalGroups / limit),
+      totalPages: Math.ceil(totalGroups / (limit || 16)),
       totalGroups,
-      currentPage: page
+      currentPage: page || 1
     });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch all groups', error: err.message });
