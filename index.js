@@ -210,9 +210,23 @@ app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
 
 app.get('/allgroups', async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 16;
+    const skip = (page - 1) * limit;
+    const category = req.query.category;
+
     const allGroupsCollection = client.db("mygroups").collection("Allgroups");
-    const groups = await allGroupsCollection.find().toArray();
-    res.status(200).json(groups);
+    const filter = category ? { category } : {};
+
+    const totalGroups = await allGroupsCollection.countDocuments(filter);
+    const groups = await allGroupsCollection.find(filter).skip(skip).limit(limit).toArray();
+
+    res.json({
+      groups,
+      totalPages: Math.ceil(totalGroups / limit),
+      totalGroups,
+      currentPage: page
+    });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch all groups', error: err.message });
   }
