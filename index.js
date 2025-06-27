@@ -311,13 +311,13 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } catch (err) {
     console.error("Failed to connect to MongoDB:", err);
   }
 }
-run().catch(console.dir);
+// run().catch(console.dir);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
