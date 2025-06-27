@@ -189,13 +189,16 @@ app.get('/joined-groups/:email', async (req, res) => {
   }
 });
 
-// Delete a joined group by its ObjectId and user email
+// Delete a joined group by its ObjectId and user email (case-insensitive)
 app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
   try {
     const joinedGroupId = req.params.joinedGroupId;
     const email = req.params.email;
     const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
-    const filter = { _id: new ObjectId(joinedGroupId), email: email };
+    const filter = {
+      _id: new ObjectId(joinedGroupId),
+      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+    };
     const result = await joinedGroupsCollection.deleteOne(filter);
     if (result.deletedCount === 0) {
       res.status(404).json({ message: 'Joined group not found or does not belong to this user' });
@@ -203,7 +206,6 @@ app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
       res.status(200).json({ message: 'Joined group deleted successfully' });
     }
   } catch (err) {
-    // console.error('Failed to delete joined group:', err);
     res.status(500).json({ message: 'Failed to delete joined group', error: err.message });
   }
 });
