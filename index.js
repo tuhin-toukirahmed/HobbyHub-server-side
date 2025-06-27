@@ -189,8 +189,25 @@ app.get('/joined-groups/:email', async (req, res) => {
   }
 });
 
-// Delete a joined group by its ObjectId and user email (case-insensitive)
-app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
+// Get joined group details by joinedGroupId
+app.get('/joined-groups/details/:joinedGroupId', async (req, res) => {
+  try {
+    const joinedGroupId = req.params.joinedGroupId;
+    const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
+    const group = await joinedGroupsCollection.findOne({ _id: new ObjectId(joinedGroupId) });
+    if (!group) {
+      res.status(404).json({ message: 'Joined group not found' });
+    } else {
+      res.status(200).json(group);
+    }
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch joined group details', error: err.message });
+  }
+});
+  
+
+  // Delete a joined group by its ObjectId and user email (case-insensitive)
+  app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
   try {
     const joinedGroupId = req.params.joinedGroupId;
     const email = req.params.email;
