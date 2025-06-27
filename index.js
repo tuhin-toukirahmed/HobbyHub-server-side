@@ -274,9 +274,9 @@ app.get('/allgroups', async (req, res) => {
 });
 
 // Get allgroups details by groupId (string or ObjectId)
-app.get('/allgroups/details/:groupId', async (req, res) => {
+app.get('/allgroups/details/:_id', async (req, res) => {
   try {
-    const groupId = req.params.groupId;
+    const groupId = req.params._id;
     let group;
     const allGroupsCollection = client.db("mygroups").collection("Allgroups");
     try {
