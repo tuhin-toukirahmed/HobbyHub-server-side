@@ -163,16 +163,20 @@ app.delete('/mygroups/:groupId/:email', async (req, res) => {
   }
 });
 
-// Joined Groups collection APIs
-app.post('/joined-groups', async (req, res) => {
+ app.post('/joined-groups', async (req, res) => {
   try {
     const newJoinedGroup = req.body;
     const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
+     const exists = await joinedGroupsCollection.findOne({
+      groupName: newJoinedGroup.groupName,
+      email: { $regex: new RegExp(`^${newJoinedGroup.email}$`, 'i') }
+    });
+    if (exists) {
+      return res.status(409).json({ message: 'User already joined this group' });
+    }
     const result = await joinedGroupsCollection.insertOne(newJoinedGroup);
-    // console.log('New joined group added:', result);
     res.status(201).json({ message: 'Joined group added successfully', result });
   } catch (err) {
-    // console.error('Failed to add joined group:', err);
     res.status(500).json({ message: 'Failed to add joined group', error: err.message });
   }
 });
@@ -184,17 +188,21 @@ app.get('/joined-groups/:email', async (req, res) => {
     const groups = await joinedGroupsCollection.find({ email }).toArray();
     res.status(200).json(groups);
   } catch (err) {
-    // console.error('Failed to fetch joined groups:', err);
-    res.status(500).json({ message: 'Failed to fetch joined groups', error: err.message });
+     res.status(500).json({ message: 'Failed to fetch joined groups', error: err.message });
   }
 });
 
-// Get joined group details by joinedGroupId
-app.get('/joined-groups/details/:joinedGroupId', async (req, res) => {
+app.get('/joined-groups/details/:joinedGroupId/:email', async (req, res) => {
   try {
     const joinedGroupId = req.params.joinedGroupId;
+    const email = req.params.email;
+    let group;
     const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
-    const group = await joinedGroupsCollection.findOne({ _id: new ObjectId(joinedGroupId) });
+     try {
+      group = await joinedGroupsCollection.findOne({ _id: new ObjectId(joinedGroupId), email });
+    } catch (e) {
+      group = await joinedGroupsCollection.findOne({ _id: joinedGroupId });
+    }
     if (!group) {
       res.status(404).json({ message: 'Joined group not found' });
     } else {
@@ -206,17 +214,22 @@ app.get('/joined-groups/details/:joinedGroupId', async (req, res) => {
 });
   
 
-  // Delete a joined group by its ObjectId and user email (case-insensitive)
-  app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
+   app.delete('/joined-groups/:joinedGroupId/:email', async (req, res) => {
   try {
     const joinedGroupId = req.params.joinedGroupId;
     const email = req.params.email;
     const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
-    const filter = {
+     let filter = {
       _id: new ObjectId(joinedGroupId),
-      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+      email: { $regex: new RegExp(`^${email}$`, 'i') }
     };
-    const result = await joinedGroupsCollection.deleteOne(filter);
+    let result;
+    try {
+      result = await joinedGroupsCollection.deleteOne(filter);
+    } catch (e) {
+      filter._id = joinedGroupId;
+      result = await joinedGroupsCollection.deleteOne(filter);
+    }
     if (result.deletedCount === 0) {
       res.status(404).json({ message: 'Joined group not found or does not belong to this user' });
     } else {
@@ -260,8 +273,26 @@ app.get('/allgroups', async (req, res) => {
   }
 });
 
- 
-
+// Get allgroups details by groupId (string or ObjectId)
+app.get('/allgroups/details/:groupId', async (req, res) => {
+  try {
+    const groupId = req.params.groupId;
+    let group;
+    const allGroupsCollection = client.db("mygroups").collection("Allgroups");
+    try {
+      group = await allGroupsCollection.findOne({ _id: new ObjectId(groupId) });
+    } catch (e) {
+      group = await allGroupsCollection.findOne({ _id: groupId });
+    }
+    if (!group) {
+      res.status(404).json({ message: 'Group not found' });
+    } else {
+      res.status(200).json(group);
+    }
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch group details', error: err.message });
+  }
+});
  
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.h1ieoou.mongodb.net/?retryWrites=true&w=majority`;
  
