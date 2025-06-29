@@ -5,8 +5,7 @@ const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const fs = require('fs');
 require('dotenv').config();
-const { ObjectId } = require('mongodb');
-
+ 
 app.use(cors());
 app.use(express.json());
 
@@ -164,21 +163,53 @@ app.delete('/mygroups/:groupId/:email', async (req, res) => {
   }
 });
 
- app.post('/joined-groups', async (req, res) => {
+// Join a group by groupId - fetches complete group data from Allgroups and stores in joinedGroups
+app.post('/joined-groups', async (req, res) => {
   try {
-    const newJoinedGroup = req.body;
+    const { groupId, email } = req.body;
+
+    if (!groupId || !email) {
+      return res.status(400).json({ message: 'groupId and email are required' });
+    }
+
+    if (!ObjectId.isValid(groupId)) {
+      return res.status(400).json({ message: 'Invalid group ID format' });
+    }
+
+    // Check if user already joined this group
     const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
-     const exists = await joinedGroupsCollection.findOne({
-      groupName: newJoinedGroup.groupName,
-      email: { $regex: new RegExp(`^${newJoinedGroup.email}$`, 'i') }
+    const exists = await joinedGroupsCollection.findOne({
+      originalGroupId: new ObjectId(groupId),
+      email: { $regex: new RegExp(`^${email}$`, 'i') }
     });
+
     if (exists) {
       return res.status(409).json({ message: 'User already joined this group' });
     }
-    const result = await joinedGroupsCollection.insertOne(newJoinedGroup);
-    res.status(201).json({ message: 'Joined group added successfully', result });
+
+    // Fetch complete group data from Allgroups collection
+    const allGroupsCollection = client.db("mygroups").collection("Allgroups");
+    const groupData = await allGroupsCollection.findOne({ _id: new ObjectId(groupId) });
+
+    if (!groupData) {
+      return res.status(404).json({ message: 'Group not found in available groups' });
+    }
+
+    // Create joined group record with complete group data + user info
+    const joinedGroupData = {
+      ...groupData,
+      originalGroupId: groupData._id, // Keep reference to original group
+      email: email, // User who joined
+      joinedAt: new Date(),
+      _id: undefined // Let MongoDB generate new _id for joined group record
+    };
+
+    delete joinedGroupData._id; // Remove the original _id so MongoDB creates new one
+
+    const result = await joinedGroupsCollection.insertOne(joinedGroupData);
+    res.status(201).json({ message: 'Successfully joined the group', result });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to add joined group', error: err.message });
+    res.status(500).json({ message: 'Failed to join group', error: err.message });
   }
 });
 
@@ -197,18 +228,22 @@ app.get('/joined-groups/details/:joinedGroupId/:email', async (req, res) => {
   try {
     const joinedGroupId = req.params.joinedGroupId;
     const email = req.params.email;
-    let group;
+
+    if (!ObjectId.isValid(joinedGroupId)) {
+      return res.status(400).json({ message: 'Invalid group ID format' });
+    }
+
     const joinedGroupsCollection = client.db("mygroups").collection("joinedGroups");
-     try {
-      group = await joinedGroupsCollection.findOne({ _id: new ObjectId(joinedGroupId), email });
-    } catch (e) {
-      group = await joinedGroupsCollection.findOne({ _id: joinedGroupId });
-    }
+    const group = await joinedGroupsCollection.findOne({ 
+      _id: new ObjectId(joinedGroupId), 
+      email: { $regex: new RegExp(`^${email}$`, 'i') }
+    });
+
     if (!group) {
-      res.status(404).json({ message: 'Joined group not found' });
-    } else {
-      res.status(200).json(group);
+      return res.status(404).json({ message: 'Joined group not found or does not belong to this user' });
     }
+
+    res.status(200).json(group);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch joined group details', error: err.message });
   }
@@ -306,19 +341,19 @@ const client = new MongoClient(uri, {
     strict: true,
     deprecationErrors: true,
   },
-  tls: true // Force TLS/SSL
+  tls: true 
 });
 
 async function run() {
   try {
     // await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } catch (err) {
-    console.error("Failed to connect to MongoDB:", err);
+    // console.error("Failed to connect to MongoDB:", err);
   }
 }
 // run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  // console.log(`Server is running on http://localhost:${port}`);
 });
